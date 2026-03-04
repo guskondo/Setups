@@ -1,0 +1,69 @@
+from pyspark.sql import SparkSession # import library for sessions
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType # Import datatypes - for full list access https://spark.apache.org/docs/latest/sql-ref-datatypes.html 
+from pyspark.sql import functions as F # import functions and adding an alias for it
+
+# Start spark session
+spark = ( 
+ SparkSession
+ .builder
+ .master("local[*]") # machine core usage configuration
+ .appName('spark_dataframe_api') # session name
+ .getOrCreate()
+)
+
+# create dataframe for all options under csv import, check on https://spark.apache.org/docs/latest/sql-data-sources-csv.html
+df = (
+    spark
+    .read
+    .option('delimiter', ';')
+    .option('header', 'true')
+    .option('inferSchema', 'true') # automatically define datatype on each column
+    .option('enconding', 'ISO-8859-1') # check documentation from the imported file
+    .csv('./dados/Preços semestrais - AUTOMOTIVOS_2025.02.csv') # path to the downloaded file
+)
+
+# show dataframe schema
+df.printSchema() 
+
+# check not null values under column "valor de compra" - not saving on a variable
+(
+    df
+    .where(
+        F.col('Valor de Compra').isNotNull()
+    )
+    .show()
+)
+
+# create a new dataframe only with the columns that will be used
+df_precos = (
+    df
+    .select('Estado - Sigla', 'Produto', 'Valor de Venda', 'Unidade de Medida')
+    .withColumn(
+        "Valor de Venda",
+        F.regexp_replace(F.col("Valor de Venda"), ",", ".") # changing "," to "." on column "Valor de Venda"
+        .cast("float") # changing column type to float
+    )
+)
+
+# create new dataframe with analysis aggregated by "Estado", "Produto", "Unidade de Medida" columns showing lower and higher values on "Valor de Venda" and showing it variance over the attributes
+df_precos_analise = (
+    df_precos
+    .groupBy(
+        F.col('Estado - Sigla'),
+        F.col('Produto'),
+        F.col('Unidade de Medida')
+    )
+    .agg(
+        F.min(F.col("Valor de Venda")).alias('menor_valor'),
+        F.max(F.col("Valor de Venda")).alias('maior_valor')
+    )
+    .withColumn(
+        "diferenca",
+        F.col('maior_valor') - F.col('menor_valor')
+    )
+    .orderBy('diferenca', ascending=False)
+)
+
+
+# show data on dataframe
+df_precos_analise.show(10)
