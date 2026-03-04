@@ -2,11 +2,13 @@ from pyspark.sql import SparkSession # import library for sessions
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType # Import datatypes - for full list access https://spark.apache.org/docs/latest/sql-ref-datatypes.html 
 
 # Start spark session
-spark = SparkSession\ 
-    .builder\
-    .master("local[*]")\ # machine core usage configuration
-    .appName('example_spark')\ # session name
-    .getOrCreate()
+spark = ( 
+ SparkSession
+ .builder
+    .master("local[*]")
+ .appName('spark_dataframe_api')
+ .getOrCreate()
+)
 
 # create data
 data = [ 
@@ -28,11 +30,13 @@ schema = (
   StructField("salary", IntegerType(), True)
    ])
 )
+
 # create dataframe
 df = spark.createDataFrame(data=data,schema=schema)
 
 # show dataframe schema
 df.printSchema() 
+
 # show data on dataframe
 df.show(truncate=False)
 
