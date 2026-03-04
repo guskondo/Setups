@@ -1,0 +1,43 @@
+#!/bin/bash
+set -e
+
+# === Pyspark library installation on Ubuntu ===
+# Before running, visit https://pypi.org/project/apache-airflow/
+# to find the latest AIRFLOW_VERSION and its corresponding supported PYTHON_VERSION.
+# Update the PYTHON_VERSION and AIRFLOW_VERSION variables below accordingly — no other changes to the script are needed.
+
+# Update versions here as required
+JDK_VERSION=17
+
+# Update the package index
+sudo apt update
+
+# Install the Java Development Kit (JDK), which includes the Java Runtime Environment (JRE) needed to run Java applications, plus development tools like the compiler (javac):
+sudo apt install openjdk-{JDK_VERSION}-jdk
+
+# Verify the installation by checking the installed Java version
+java -- version
+
+# Install python package manager poetry
+sudo apt install python3-poetry
+
+# Create new python package/dependencies environment
+poetry new pyspark-project
+
+# install pyspark
+poetry add pyspark
+
+# install pyspark
+poetry add jupyterlab
+
+# Activate Python virtual environment (command line should change showing the python version and project name of the virtual environment)
+poetry shell
+
+# start jupyterlab (it will provide an url to open jupyterlab
+jupyter-lab
+
+# Define the constraint-file URL
+CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
+
+# Install Apache Airflow with the specified version and constraints (dependency versions)
+pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "$CONSTRAINT_URL"
